@@ -11,7 +11,7 @@ const authUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     // if user exists and password matches, send back user data
-    if (user) {
+    if (user && (await user.matchPassword(password))) {
         generateToken(res, user._id);
         res.status(201).json({
             message: "User logged in successfully",
