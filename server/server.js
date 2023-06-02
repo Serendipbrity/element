@@ -10,6 +10,10 @@ import userRoutes from "./routes/userRoutes.js";
 connectDB();
 const app = express();
 
+// allow us to parse raw json
+app.use(express.json());
+// allow us to send form data
+app.use(express.urlencoded({ extended: true }));
 // any route using /api/users will be connected to userRoutes
 app.use('/api/users', userRoutes);
 
