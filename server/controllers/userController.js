@@ -29,7 +29,11 @@ const authUser = asyncHandler(async (req, res) => {
 // port POST /api/users/logout
 // public
 const logoutUser = asyncHandler(async (req, res) => { 
-    res.status(200).json({ message: "Logout User" })
+    res.cookie('jwt', '', { 
+        httpOnly: true,
+        expires: new Date(0)
+    })
+    res.status(200).json({ message: "User is now logged out" })
  });
 
 // register new user
@@ -68,20 +72,44 @@ const registerUser = asyncHandler(async (req, res) => {
 // port GET /api/users/profile
 // private -- need json web token to access
 const getUserProfile = asyncHandler(async (req, res) => { 
-    // User.find({}).then((users) => {
-    //     res.status(200).json(req.body)
-    // }).catch((err) => {
-    //     console.log(err);
-    // })
-    res.status(200).json({ message: "Find User" })
+    const user = {
+        _id: req.user._id,
+        username: req.user.username,
+        email: req.user.email
+    }
+
+    res.status(200).json({ user })
 })
  
 // update user profile
 // port PUT /api/users/profile
 // private -- need json web token to access
-const updateUserProfile = asyncHandler(async (req, res) => { 
-    res.status(200).json({ message: "Update User Profile" })
- });
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    // if user exists, update user data
+    if (user) { 
+        // if username is included in body or not so then it stays as is
+        user.username = req.body.username || user.username;
+        // if email is included in body or not so then it stays as is
+        user.email = req.body.email || user.email;
+        // if password is included in body, then they can update password
+        if (req.body.password) { 
+            user.password = req.body.password;
+        }
+        // update the user 
+        const updatedUser = await user.save();
+        // respond with updated user data
+        res.status(201).json({
+            message: "User updated successfully",
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email
+        });
+    } else {
+        res.status(404);
+        throw new Error("User not found");
+     }
+});
 
 export {
     authUser,
